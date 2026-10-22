@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GradeFlow - Student Dashboard</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="layout">
+    <aside class="sidebar">
+        <h2>GradeFlow</h2>
+        <p>Student Management</p>
+        <a href="/">Dashboard</a>
+        <a href="#students">Students</a>
+        <a href="#add-student">Add Student</a>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <h1>Student Dashboard</h1>
+            <p>Manage student records and academic performance.</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <p class="message {{ category }}">{{ message }}</p>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Students</h3>
+                <h2>{{ stats.total }}</h2>
+            </div>
+            <div class="stat-card">
+                <h3>Average Marks</h3>
+                <h2>{{ stats.average }}%</h2>
+            </div>
+            <div class="stat-card">
+                <h3>Grade A Students</h3>
+                <h2>{{ students | selectattr('grade', 'equalto', 'A') | list | length }}</h2>
+            </div>
+        </section>
+
+        <section class="panel" id="students">
+            <h2>Student Records</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Marks</th>
+                            <th>Grade</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.student_id }}</td>
+                            <td>{{ student.student_name }}</td>
+                            <td>{{ student.department }}</td>
+                            <td>{{ student.marks }}%</td>
+                            <td><span class="grade">{{ student.grade }}</span></td>
+                            <td>
+                                <form method="POST"
+                                      action="{{ url_for('delete_student', student_id=student.student_id) }}"
+                                      onsubmit="return confirm('Delete this student?')">
+                                    <button type="submit" class="delete-button">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6">No students found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel" id="add-student">
+            <h2>Add New Student</h2>
+            <form method="POST" action="/add" class="student-form">
+                <label>
+                    Student ID
+                    <input type="number" name="student_id" min="1" required>
+                </label>
+
+                <label>
+                    Student Name
+                    <input type="text" name="student_name" maxlength="50" required>
+                </label>
+
+                <label>
+                    Marks (0-100)
+                    <input type="number" name="marks" min="0" max="100"
+                           step="0.01" required>
+                </label>
+
+                <label>
+                    Department
+                    <select name="department" required>
+                        <option value="">Select department</option>
+                        <option>Computer Science</option>
+                        <option>Cloud Computing</option>
+                        <option>Data Science</option>
+                        <option>Cloud Computing &amp; DevOps</option>
+                    </select>
+                </label>
+
+                <button type="submit" class="primary-button">
+                    Add Student
+                </button>
+            </form>
+        </section>
+
+        <footer>GradeFlow | Student Record Management System</footer>
+    </main>
+</div>
+
+</body>
+</html>
