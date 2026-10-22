@@ -4,56 +4,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GradeFlow - Student Dashboard</title>
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <title>GradeFlow | Student Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-
-<div class="layout">
-    <aside class="sidebar">
-        <h2>GradeFlow</h2>
-        <p>Student Management</p>
-        <a href="/">Dashboard</a>
-        <a href="#students">Students</a>
-        <a href="#add-student">Add Student</a>
-    </aside>
-
-    <main class="main-content">
-        <header>
-            <h1>Student Dashboard</h1>
-            <p>Manage student records and academic performance.</p>
-        </header>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <p class="message {{ category }}">{{ message }}</p>
-            {% endfor %}
-        {% endwith %}
-
-        <section class="stats-grid">
-            <div class="stat-card">
-                <h3>Total Students</h3>
-                <h2>{{ stats.total }}</h2>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">G</div>
+            <div>
+                <h1>GradeFlow</h1>
+                <p>Student Management System</p>
             </div>
-            <div class="stat-card">
-                <h3>Average Marks</h3>
-                <h2>{{ stats.average }}%</h2>
-            </div>
-            <div class="stat-card">
-                <h3>Grade A Students</h3>
-                <h2>{{ students | selectattr('grade', 'equalto', 'A') | list | length }}</h2>
+        </div>
+        <span class="status"><span class="status-dot"></span> Dashboard</span>
+    </header>
+
+    <main class="container">
+        <section class="welcome">
+            <div>
+                <p class="eyebrow">STUDENT OVERVIEW</p>
+                <h2>Student Dashboard</h2>
+                <p class="subtitle">Manage student records and monitor academic performance.</p>
             </div>
         </section>
 
-        <section class="panel" id="students">
-            <h2>Student Records</h2>
-            <div class="table-wrap">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="messages">
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="stats">
+            <article class="stat-card">
+                <p>Total Students</p>
+                <h3>{{ stats.total }}</h3>
+                <span>Registered records</span>
+            </article>
+            <article class="stat-card">
+                <p>Average Marks</p>
+                <h3>{{ stats.average }}%</h3>
+                <span>Overall class average</span>
+            </article>
+            <article class="stat-card">
+                <p>Grade A</p>
+                <h3>{{ stats.grade_a }}</h3>
+                <span>Students scoring 80+</span>
+            </article>
+            <article class="stat-card">
+                <p>Passed</p>
+                <h3>{{ stats.passed }}</h3>
+                <span>Marks of 40 or above</span>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <h2>Add a Student</h2>
+                    <p>Enter the student's details below.</p>
+                </div>
+            </div>
+
+            <form action="{{ url_for('add_student') }}" method="POST" class="student-form">
+                <div class="form-field">
+                    <label for="student_id">Student ID</label>
+                    <input type="number" id="student_id" name="student_id"
+                           min="1" required placeholder="e.g. 7">
+                </div>
+
+                <div class="form-field">
+                    <label for="student_name">Student Name</label>
+                    <input type="text" id="student_name" name="student_name"
+                           required maxlength="100" placeholder="Enter full name">
+                </div>
+
+                <div class="form-field">
+                    <label for="marks">Marks (0–100)</label>
+                    <input type="number" id="marks" name="marks"
+                           min="0" max="100" step="0.01" required placeholder="e.g. 85">
+                </div>
+
+                <div class="form-field">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department"
+                           required maxlength="100" placeholder="e.g. Cloud Computing">
+                </div>
+
+                <button type="submit" class="primary-button">+ Add Student</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <div class="section-heading">
+                <div>
+                    <h2>Student Records</h2>
+                    <p>Grades are calculated by the MySQL GetGrade function.</p>
+                </div>
+                <span class="record-count">{{ students|length }} records</span>
+            </div>
+
+            <div class="table-wrapper">
                 <table>
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Name</th>
+                            <th>Student Name</th>
                             <th>Department</th>
                             <th>Marks</th>
                             <th>Grade</th>
@@ -64,23 +123,27 @@
                         {% for student in students %}
                         <tr>
                             <td>{{ student.student_id }}</td>
-                            <td>{{ student.student_name }}</td>
+                            <td class="student-name">{{ student.student_name }}</td>
                             <td>{{ student.department }}</td>
                             <td>{{ student.marks }}%</td>
-                            <td><span class="grade">{{ student.grade }}</span></td>
                             <td>
-                                <form method="POST"
-                                      action="{{ url_for('delete_student', student_id=student.student_id) }}"
-                                      onsubmit="return confirm('Delete this student?')">
-                                    <button type="submit" class="delete-button">
-                                        Delete
-                                    </button>
+                                <span class="grade grade-{{ student.grade|lower }}">
+                                    {{ student.grade }}
+                                </span>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('delete_student', student_id=student.student_id) }}"
+                                      method="POST"
+                                      onsubmit="return confirm('Delete this student record?');">
+                                    <button type="submit" class="delete-button">Delete</button>
                                 </form>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="6">No students found.</td>
+                            <td colspan="6" class="empty-state">
+                                No student records found. Add your first student above.
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -88,45 +151,9 @@
             </div>
         </section>
 
-        <section class="panel" id="add-student">
-            <h2>Add New Student</h2>
-            <form method="POST" action="/add" class="student-form">
-                <label>
-                    Student ID
-                    <input type="number" name="student_id" min="1" required>
-                </label>
-
-                <label>
-                    Student Name
-                    <input type="text" name="student_name" maxlength="50" required>
-                </label>
-
-                <label>
-                    Marks (0-100)
-                    <input type="number" name="marks" min="0" max="100"
-                           step="0.01" required>
-                </label>
-
-                <label>
-                    Department
-                    <select name="department" required>
-                        <option value="">Select department</option>
-                        <option>Computer Science</option>
-                        <option>Cloud Computing</option>
-                        <option>Data Science</option>
-                        <option>Cloud Computing &amp; DevOps</option>
-                    </select>
-                </label>
-
-                <button type="submit" class="primary-button">
-                    Add Student
-                </button>
-            </form>
-        </section>
-
-        <footer>GradeFlow | Student Record Management System</footer>
+        <footer>
+            <p>GradeFlow · Student Grade Management System</p>
+        </footer>
     </main>
-</div>
-
 </body>
 </html>
